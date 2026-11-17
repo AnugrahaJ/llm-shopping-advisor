@@ -4,6 +4,10 @@ A shopping assistant that asks a few questions before recommending anything, alo
 
 It works for three product categories: skincare, supplements and gadgets. Products are found through live web search.
 
+**Live demo:** In progress. The app is being built and will be live in few days.
+
+---
+
 ## Why this was built
 
 Ask most chatbots to "suggest a face wash" and they answer straight away. They don't know the user's skin type, budget or main concern, so the suggestion is often a poor fit.
@@ -136,4 +140,4 @@ This bot gives general shopping suggestions, not medical advice. Please talk to 
 ## Author
 
 **Anugraha Jayakumar**
-[LinkedIn] · [Portfolio]
+[LinkedIn](https://www.linkedin.com/in/anugraha-jayakumar-9b751424b) · [Portfolio](https://anugrahaj.github.io/)
