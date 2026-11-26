@@ -1,0 +1,37 @@
+{
+  "query": "I'm 28 years old. I recently had tuberculosis and I'm",
+  "results": {
+    "query": "I'm 28 years old. I recently had tuberculosis and I'm",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://music.amazon.in/tracks/B009RXKYCK",
+        "title": "Tuberculosis Sheets - Album tracklist",
+        "content": "Listen to your favourite song Tuberculosis Sheets from The People Love This Guy Because He Makes Great Songs Like These Ones by The Passionate & Objective",
+        "score": 0.09807933,
+        "raw_content": null,
+        "id": "a2e3cb-00"
+      },
+      {
+        "url": "https://www.amazon.in/Cherrys-Jubilee-Singin-Swingin-Through/dp/1572438347",
+        "title": "Cherry's Jubilee: Singin' and Swingin' Through Life with Dino ...",
+        "content": "Don Cherry straddled the world of music and the world of golf. With his two innate talents, Cherry ascended to unbelievable heights—making gold records,",
+        "score": 0.010408314,
+        "raw_content": null,
+        "id": "7d2dfa-01"
+      },
+      {
+        "url": "https://www.amazon.in/Love-Anger-Madness-Haitian-Classics-ebook/dp/B002JCJ6UM",
+        "title": "Love, Anger, Madness: A Haitian Triptych (Modern Library ...",
+        "content": "The only English translation of “a masterpiece” (The Nation)—a stunning trilogy of novellas about the soul-crushing cost of life under a violent Haitian",
+        "score": 0.008283626,
+        "raw_content": null,
+        "id": "d3e9b8-02"
+      }
+    ],
+    "response_time": 1.1,
+    "request_id": "ee94b72f-d87a-486d-8acd-c3e99917e0ea"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "query": "Plum green tea moisturizer oily skin India",
+  "results": {
+    "query": "Plum green tea moisturizer oily skin India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/Plum-Green-Mattifying-Moisturizer-50ml/dp/B00OCJ5PUU",
+        "title": "Plum Green Tea Mattifying Face Moisturizer with Glycolic acid 50ml",
+        "content": "Plum Green Tea Mattifying Face Moisturizer with Glycolic acid 50ml | Controls Oil & Hydrates Skin | Non-Sticky Moisturizer for Women & Men | 50ml.",
+        "score": 0.55154353,
+        "raw_content": null,
+        "id": "5f9712-00"
+      },
+      {
+        "url": "https://www.amazon.in/Plum-Moisturizer-Fragrance-Niacinamide-Hyaluronic/dp/B08ZL8YM1B",
+        "title": "Plum Green Tea Oil-Free Face Moisturizer | With Niacinamide & ...",
+        "content": "Plum Green Tea Oil-Free Face Moisturizer | With Niacinamide & Hyaluronic Acid | Fights Pimples & Hydrates | Fades Blemishes & Brightens Skin | Non-Sticky",
+        "score": 0.49917173,
+        "raw_content": null,
+        "id": "784136-01"
+      },
+      {
+        "url": "https://www.nykaa.com/plum-green-tea-oil-free-moisturizer/p/1324108",
+        "title": "Green Tea Oil-Free Moisturizer With Niacinamide For Oily, Acne Prone Skin",
+        "content": "Green Tea Oil-Free Moisturizer With Niacinamide For Oily, Acne Prone Skin. (50ml). 4.4/5. (22126). ₹470₹42310%. Incl. of all taxes. Pink Friday Sale Price.",
+        "score": 0.48531762,
+        "raw_content": null,
+        "id": "2837b3-02"
+      }
+    ],
+    "response_time": 2.79,
+    "request_id": "aedde782-d60d-46fd-820a-45d54afb202a"
+  }
+}

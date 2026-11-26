@@ -1,0 +1,37 @@
+{
+  "query": "low calorie chips buy online India",
+  "results": {
+    "query": "low calorie chips buy online India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/Low-Calorie-High-Fibre-Gluten-Free-Snacking-Masala-Pack/dp/B0GNMG5KGT",
+        "title": "Xerocal Healthy Chips -150g Each | Low-Calorie, High-Fibre Snacks",
+        "content": "Xerocal Healthy Chips -150g Each | Low-Calorie, High-Fibre Snacks | Vegan, Gluten-Free & Trans Fat Free | Perfect for Snacking (Beetroot Masala,",
+        "score": 0.3443332,
+        "raw_content": null,
+        "id": "216202-00"
+      },
+      {
+        "url": "https://www.amazon.in/low-calorie-chips/s?k=low+calorie+chips",
+        "title": "Low Calorie Chips",
+        "content": "Evolve Oats Chips Healthy Snacks for Kids, Adults | Gluten Free, Vacuum Fried, High in Protein, Low Calorie, Weight Loss Friendly, Peri Peri Flavor - 100 gram.",
+        "score": 0.3083985,
+        "raw_content": null,
+        "id": "a0693f-01"
+      },
+      {
+        "url": "https://www.amazon.in/low-calorie-high-protein-snacks/s?k=low+calorie+high+protein+snacks",
+        "title": "Low Calorie High Protein Snacks",
+        "content": "Prolicious Healthy Protein Thin Chips | 10g Protein & 5g Fibre Per Pack | Vegan Snack | No Maida | No Palm Oil | 50g | Garlic & Herbs.",
+        "score": 0.2972659,
+        "raw_content": null,
+        "id": "84cb19-02"
+      }
+    ],
+    "response_time": 1.77,
+    "request_id": "8b9de7cf-129f-4632-afc7-a1d753b364f5"
+  }
+}

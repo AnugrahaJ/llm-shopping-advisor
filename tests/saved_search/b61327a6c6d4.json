@@ -1,0 +1,37 @@
+{
+  "query": "apple cider vinegar under 250 INR",
+  "results": {
+    "query": "apple cider vinegar under 250 INR",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/Apple-Cider-Vinegar-%E2%82%B9100-%E2%82%B9200-Vinegars/s?rh=n%3A4861574031%2Cp_36%3A1741389031",
+        "title": "100 - ₹200 - Apple Cider Vinegar / Vinegars - Amazon.in",
+        "content": "La Nature's Apple Cider Vinegar with Mother with Green Coffee and Garcinia Cambogia Extract for Men and Women - 250 ml (Pack of 1) · 250 ml (Pack of 1).",
+        "score": 0.5560681,
+        "raw_content": null,
+        "id": "1ac8af-00"
+      },
+      {
+        "url": "https://www.amazon.in/Vinegar-Capsules-Vitamins-Minerals-Supplements/s?rh=n%3A11364811031&hidden-keywords=-curler-sponge",
+        "title": "Vinegar Capsules: Health & Personal Care - Amazon.in",
+        "content": "Apple Cider Vinegar Effervescent (500mg) - 20 Tablets (Apple Flavour), With Vitamin B12 & B6 | For Weight Management & Gut Health | No added Sugar | Easy to",
+        "score": 0.19436783,
+        "raw_content": null,
+        "id": "719119-01"
+      },
+      {
+        "url": "https://www.amazon.in/PLIX-Vinegar-Effervescent-Tablets-vitamin/dp/B09RTJQF47",
+        "title": "Plix Apple Cider Vinegar Effervescent Tablet With Mother",
+        "content": "#### Books\n\n##### 10 Days Returnable\n\nYou can return if you receive a damaged, defective or incorrect product.\n\n#### Used Books\n\n##### 10 Days, Refund\n\nReturnable if you’ve received the product in a condition that is damaged, defective or different from its description on the product detail page on Amazon.in.\n\nRefunds will be issued only if it is determined that the item was not damaged while in your possession, or is not different from what was shipped to you.",
+        "score": 0.12776141,
+        "raw_content": null,
+        "id": "69a67a-02"
+      }
+    ],
+    "response_time": 0.91,
+    "request_id": "46d252c8-5116-4b12-baab-ce90e41ff714"
+  }
+}

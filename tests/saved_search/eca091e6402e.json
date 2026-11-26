@@ -1,0 +1,37 @@
+{
+  "query": "unsweetened peanut butter only peanuts India",
+  "results": {
+    "query": "unsweetened peanut butter only peanuts India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/Alpino-Natural-Peanut-Butter-Unsweetened/dp/B0714D4Q9D",
+        "title": "ALPINO Natural Peanut Butter Smooth 1kg – Unsweetened, 100% Roasted Peanuts - 30% Protein, Source of Healthy Fats, No Added Sugar & Salt : Amazon.in: Grocery & Gourmet Foods",
+        "content": "| Flavor | Natural Smooth |\n---|\n| Brand Name | Alpino |\n| Allergen Information | Peanuts |\n| Item Form | Paste |\n| Specialty | High Protein, No Added Salt, No Added Sugar, Preservative Free |\n| Diet Type | Plant Based |\n| Nut or Seed Type | Peanut |\n| Country of Origin | India |\n| Manufacturer | Spectacle Foods, support@alpinohealthfoods.com |\n| Container Type | Jar |\n| Included Components | Natural Peanut Butter Smooth |\n| Item Type Name | Natural Unsweetened Peanut Butter Creamy | [...] Better eat it over the next 20 days.\n\nPretty sad they are sending out expired food.\n\nTasty!\n\nNice tasty peanut butter, will be ordering again!\n\nFrom Alpino\n\nOne-time purchase: ₹346.00 ( ₹34.60 / g) 17% Savings\n\nList Price: ₹419.00\n\nSubscribe and Save price (No fees, Cancel at any time): ₹328.70 ( ₹32.87 / g) 22% Savings\n\nAdditional savings available through Subscribe and Save (No fees, Cancel at any time)\n\nInclusive of all taxes\n\nDid you find this product summary feature useful? [...] Taste & Texture: The smooth variant is incredibly tasty and creamy. Because it's 100% natural, it doesn't have the artificial sweetness of regular peanut butters, but the pure roasted peanut flavor is excellent.\n\nBudget-Friendly: It is highly affordable compared to other pure natural peanut butters on the market, offering great value for money.\n\nIngredients: Zero added sugar, zero hydrogenated oils, and no preservatives—just 100% high-quality roasted peanuts.",
+        "score": 0.6715783,
+        "raw_content": null,
+        "id": "41c815-00"
+      },
+      {
+        "url": "https://www.amazon.in/peanut-butter-unsweetened/s?k=peanut+butter+unsweetened",
+        "title": "Peanut Butter Unsweetened",
+        "content": "ALPINO Natural Peanut Butter Smooth - Made with 100% Roasted Peanuts - 30g Protein, No Added Sugar & Salt, Gluten Free, Unsweetened Peanut Butter Creamy (400 G).",
+        "score": 0.3229529,
+        "raw_content": null,
+        "id": "b5e9a8-01"
+      },
+      {
+        "url": "https://www.amazon.in/Pintola-Natural-Crunchy-Unsweetened-Non-GMO/dp/B06XFSSDNH",
+        "title": "Amazon.in",
+        "content": "Click the button below to continue shopping Continue shopping Conditions of Use & Sale Privacy Notice © 1996-2025, Amazon.com, Inc. or its affiliates",
+        "score": 0.0047737225,
+        "raw_content": null,
+        "id": "536c21-02"
+      }
+    ],
+    "response_time": 2.1,
+    "request_id": "72eb5d4e-4419-4dbb-a88d-b5ea214062ed"
+  }
+}

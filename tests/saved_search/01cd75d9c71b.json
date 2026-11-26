@@ -1,0 +1,37 @@
+{
+  "query": "unsweetened peanut butter only peanuts under 200",
+  "results": {
+    "query": "unsweetened peanut butter only peanuts under 200",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/1-kg-peanut-butter-under-200/s?k=1+kg+peanut+butter+under+200",
+        "title": "1 Kg Peanut Butter Under 200 - Amazon.in",
+        "content": "Natural Peanut Butter | Only 100% Roasted Peanuts | No Added Sugar | 28% High Protein | GMO Free | Cholesterol Free | Vegan (340g)",
+        "score": 0.5598015,
+        "raw_content": null,
+        "id": "c31870-00"
+      },
+      {
+        "url": "https://www.amazon.in/peanut-butter-unsweetened-creamy/s?k=peanut+butter+unsweetened+creamy",
+        "title": "Peanut Butter Unsweetened Creamy - Amazon.in",
+        "content": "ALPINO Natural Peanut Butter Smooth - Made with 100% Roasted Peanuts - 30g Protein, No Added Sugar & Salt, Gluten Free, Unsweetened Peanut Butter Creamy (400 G).",
+        "score": 0.42345798,
+        "raw_content": null,
+        "id": "2ec009-01"
+      },
+      {
+        "url": "https://www.amazon.in/peanut-butter-oil/s?k=peanut+butter+no+oil&page=3",
+        "title": "Peanut Butter No Oil - Amazon.in",
+        "content": "Hoyi's Unsweetened Peanut Butter- 325g | High Protein Spread| No Palm Oil, No Refined Sugar | Slow Roasted Peanuts | Healthy Snack for Fitness & Kids.",
+        "score": 0.40910277,
+        "raw_content": null,
+        "id": "7f09ad-02"
+      }
+    ],
+    "response_time": 0.91,
+    "request_id": "79ef7edf-fd5e-4ba7-8499-4ddad4b3d31b"
+  }
+}

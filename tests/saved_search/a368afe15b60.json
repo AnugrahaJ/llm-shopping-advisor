@@ -1,0 +1,37 @@
+{
+  "query": "zero sugar ice cream India",
+  "results": {
+    "query": "zero sugar ice cream India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.flipkart.com/go-zero-chocolate-belgian-dark-low-calorie-guilt-free-ice-cream-tub/p/itm2e11f9e57fefb",
+        "title": "Go Zero Chocolate Guilt Free Ice Cream Tub Price in India - Flipkart",
+        "content": "Go Zero Chocolate Guilt Free Ice Cream Tub (500 ml) ₹1. Sugar Free, No Trans Fat, Low Cholesterol Shelf Life 365 Days Type Ice Cream Dimensions Width 11 cm",
+        "score": 0.5997782,
+        "raw_content": null,
+        "id": "998fe6-00"
+      },
+      {
+        "url": "https://www.amazon.in/zero-sugar-ice-cream/s?k=zero+sugar+ice+cream",
+        "title": "Zero Sugar Ice Cream - Amazon.in",
+        "content": "Browse zero sugar ice cream in cups, cones, sticks, and tubs. Creamy, low-calorie options in diverse flavours for every taste.",
+        "score": 0.40127715,
+        "raw_content": null,
+        "id": "4ff680-01"
+      },
+      {
+        "url": "https://www.amazon.in/low-fat-ice-cream/s?k=low+fat+ice+cream",
+        "title": "Low Fat Ice Cream - Amazon.in",
+        "content": "The Brooklyn Creamery Low Calorie Death By Chocolate Chocobar Zero Added Sugar Ice Cream Stick 55ml · 3.53.5 out of 5 stars (22). 300+ bought in past month.",
+        "score": 0.32348695,
+        "raw_content": null,
+        "id": "92535d-02"
+      }
+    ],
+    "response_time": 1.13,
+    "request_id": "ce1260b3-2af4-4100-acea-9a238132f78d"
+  }
+}

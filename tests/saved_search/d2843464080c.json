@@ -1,0 +1,37 @@
+{
+  "query": "Paper Boat zero sugar soda India",
+  "results": {
+    "query": "Paper Boat zero sugar soda India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/stores/PaperBoat/page/ED85125E-F89E-4F2D-B11E-2FB20D3FEF3E",
+        "title": "Paper Boat: Zero Sugar Drinks - Amazon.in",
+        "content": "Flavours that have the exact chemical composition as the fruit, and are derived from natural sources. Paper Boat: Zero Sugar Drinks. Delivering to Mumbai",
+        "score": 0.56937385,
+        "raw_content": null,
+        "id": "064bd7-00"
+      },
+      {
+        "url": "https://www.amazon.in/Paper-Boat-Cranberry-Sparkling-Carbonated/dp/B0DJH2BKLF",
+        "title": "Paper Boat Zero Cranberry Lime Sparkling Water, 600 ml | Zero Sugar, Zero Calories | Sugar Free| Flavoured Carbonated Water | No Aspartame : Amazon.in: Grocery & Gourmet Foods",
+        "content": "#### Books\n\n##### 10 Days Returnable\n\nYou can return if you receive a damaged, defective or incorrect product.\n\n#### Used Books\n\n##### 10 Days, Refund\n\nReturnable if you’ve received the product in a condition that is damaged, defective or different from its description on the product detail page on Amazon.in.\n\nRefunds will be issued only if it is determined that the item was not damaged while in your possession, or is not different from what was shipped to you.",
+        "score": 0.459925,
+        "raw_content": null,
+        "id": "13fe0e-01"
+      },
+      {
+        "url": "https://www.amazon.in/paperboat-sparkling-water/s?k=paperboat+sparkling+water",
+        "title": "Paperboat Sparkling Water - Amazon.in",
+        "content": "Zero Paper Boat Ginger Lemon Sparkling Water, 600ml | Carbonated Water. Sugar | Strong Carbonation | Perfect Mixer for Cocktails & Mocktails",
+        "score": 0.41306278,
+        "raw_content": null,
+        "id": "a7d154-02"
+      }
+    ],
+    "response_time": 1.04,
+    "request_id": "fe79793c-abc1-4932-a1b1-1a43052225e8"
+  }
+}

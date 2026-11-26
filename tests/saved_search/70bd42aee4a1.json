@@ -1,0 +1,37 @@
+{
+  "query": "buy retinol serum India",
+  "results": {
+    "query": "buy retinol serum India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.nykaa.com/serums-with-retinol/c/72541",
+        "title": "Buy Retinol Serum Online - Nykaa",
+        "content": "Sale Price ₹6,638. Nykaa makes it easy to explore and choose the best retinol serum in India that fits your routine.",
+        "score": 0.77029204,
+        "raw_content": null,
+        "id": "fc69df-00"
+      },
+      {
+        "url": "https://www.amazon.in/best-retinol-serum-in-india/s?k=best+retinol+serum+in+india",
+        "title": "Best Retinol Serum In India - Amazon.in",
+        "content": "DERMDOC 2% Retinol Face Serum, 12ml | Reduces Fine Lines | Improves Skin Texture & Elasticity| Brightens Skin | Hydrating | Boosts Collagen | Smoother",
+        "score": 0.7282654,
+        "raw_content": null,
+        "id": "eee85d-01"
+      },
+      {
+        "url": "https://www.myntra.com/retinol-serum",
+        "title": "Buy The Best Retinol Serum From Top Brands At Best Price - Myntra",
+        "content": "DOT & KEY. Pomegranate Retinol + Caffeine Eye Cream - 20ml. ₹495 ; Beauty of Joseon. Ginseng & Retinal Enriched Revive Eye Serum Mini- 10 ml. ₹499 ; PLIX THE",
+        "score": 0.601535,
+        "raw_content": null,
+        "id": "d1c0e7-02"
+      }
+    ],
+    "response_time": 0.95,
+    "request_id": "900fe983-4d59-4b4f-b367-965e7ee4768b"
+  }
+}

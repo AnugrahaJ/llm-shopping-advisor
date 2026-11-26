@@ -1,0 +1,37 @@
+{
+  "query": "Paper Boat zero sugar soda nutrition",
+  "results": {
+    "query": "Paper Boat zero sugar soda nutrition",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/Paper-Boat-Cranberry-Sparkling-Carbonated/dp/B0DJH2BKLF",
+        "title": "Paper Boat Zero Cranberry Lime Sparkling Water, 600 ml | Zero Sugar, Zero Calories | Sugar Free| Flavoured Carbonated Water | No Aspartame : Amazon.in: Grocery & Gourmet Foods",
+        "content": "#### Books\n\n##### 10 Days Returnable\n\nYou can return if you receive a damaged, defective or incorrect product.\n\n#### Used Books\n\n##### 10 Days, Refund\n\nReturnable if you’ve received the product in a condition that is damaged, defective or different from its description on the product detail page on Amazon.in.\n\nRefunds will be issued only if it is determined that the item was not damaged while in your possession, or is not different from what was shipped to you.",
+        "score": 0.40804085,
+        "raw_content": null,
+        "id": "6b9ee0-00"
+      },
+      {
+        "url": "https://www.amazon.in/Paper-Boat-Sparkling-Carbonated-Calories/dp/B0BCGCKRD6",
+        "title": "Paper Boat Lemon Lime Sparkling Water, 600ml - Amazon.in",
+        "content": "ZERO FAT, ZERO CALORIES: That's right! Absolutely none of the stuff that makes you think twice. We've gone the extra mile on this one! NO SUCH THING AS SUGAR",
+        "score": 0.3782294,
+        "raw_content": null,
+        "id": "f09601-01"
+      },
+      {
+        "url": "https://www.amazon.in/stores/PaperBoat/page/ED85125E-F89E-4F2D-B11E-2FB20D3FEF3E",
+        "title": "Paper Boat: Zero Sugar Drinks - Amazon.in",
+        "content": "A. Natural Flavours: Flavours that have the exact chemical composition as the fruit, and are derived from natural sources. B. Nature-Identical Flavours:",
+        "score": 0.35824078,
+        "raw_content": null,
+        "id": "0da1f0-02"
+      }
+    ],
+    "response_time": 0.87,
+    "request_id": "c1fe5541-83b4-477a-9e62-6538bd409d29"
+  }
+}

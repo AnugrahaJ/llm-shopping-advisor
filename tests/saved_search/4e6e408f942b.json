@@ -1,0 +1,37 @@
+{
+  "query": "apple cider vinegar buy online India",
+  "results": {
+    "query": "apple cider vinegar buy online India",
+    "follow_up_questions": null,
+    "answer": null,
+    "images": [],
+    "results": [
+      {
+        "url": "https://www.amazon.in/apple-cider-vinegar/s?k=apple+cider+vinegar",
+        "title": "Buy Apple Cider Vinegar Online at Best Price on Amazon India",
+        "content": "DiSano Apple Cider Vinegar with Mother 500 ml, Raw, Unfiltered & Unpasteurized, Made with Himalayan Apples, For Weight Loss, Immunity, Digestion, Gut Health,",
+        "score": 0.7472472,
+        "raw_content": null,
+        "id": "e38fbc-00"
+      },
+      {
+        "url": "https://www.amazon.in/Apple-Cider-Vinegar-Vinegars/s?rh=n%3A4861574031%2Cp_n_pct-off-with-tax%3A2665401031",
+        "title": "50% Off Or More - Apple Cider Vinegar / Vinegars - Amazon.in",
+        "content": "DiSano Apple Cider Vinegar with Mother 500 ml, Raw, Unfiltered & Unpasteurized, Made with Himalayan Apples, For Weight Loss, Immunity, Digestion, Gut Health,",
+        "score": 0.5737978,
+        "raw_content": null,
+        "id": "0fe675-01"
+      },
+      {
+        "url": "https://www.amazon.in/Himalayan-Vinegar-Mother-Unfiltered-Unpasteurized/dp/B08BCYYRRF",
+        "title": "Dabur Himalayan Apple Cider Vinegar 500ml - Amazon.in",
+        "content": "Made from the juice of best quality apples grown in the orchards of pristine hills of the Himalayas · It is naturally rich in Antioxidants and contains no added",
+        "score": 0.5585979,
+        "raw_content": null,
+        "id": "21ad42-02"
+      }
+    ],
+    "response_time": 0.9,
+    "request_id": "6d85d8ac-66c8-4ec5-a9f5-261c5b7fe8df"
+  }
+}
