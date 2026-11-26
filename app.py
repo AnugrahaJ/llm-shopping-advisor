@@ -9,6 +9,7 @@ then calls run_v2_6 from bot.py to search and answer.
 """
 
 import os
+import urllib.parse
 
 import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -56,6 +57,7 @@ AVATARS = {
     "concerned": "assets/concerned.png",
     "surprised": "assets/surprised.png",
     "apologetic": "assets/apologetic.png",
+    "you": "assets/you.png",          # her own avatar
 }
 
 
@@ -64,7 +66,7 @@ def face(mood):
     path = AVATARS.get(mood)
     if path and os.path.exists(path):
         return path
-    return "🧴"
+    return "🧑" if mood == "you" else "🧴"
 
 
 # ===== the diet-foods hard stop =====
@@ -180,62 +182,128 @@ def reset():
 
 # ===== the screen =====
 
-st.set_page_config(page_title="Willy — Shopping Advisor", page_icon="🧴")
+st.set_page_config(
+    page_title="Willy — Shopping Advisor",
+    page_icon="🧴",
+    layout="wide",
+)
 
-# a little polish on top of the cream-and-navy theme in .streamlit/config.toml
+# the lavender background with its blobs and teal leaves
+BACKGROUND_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"'
+    ' preserveAspectRatio="xMidYMid slice">'
+    '<rect width="1200" height="900" fill="#ECE8F6"/>'
+    '<path d="M0,0 C180,60 270,0 390,90 C510,180 270,240 90,195 C-30,165 -15,60 0,0 Z"'
+    ' fill="#D1CBE5" opacity="0.55"/>'
+    '<path d="M1200,0 C1050,45 990,165 1080,255 C1170,345 1230,180 1200,0 Z"'
+    ' fill="#D1CBE5" opacity="0.45"/>'
+    '<path d="M0,900 C150,840 210,710 90,660 C-15,620 -15,810 0,900 Z"'
+    ' fill="#D1CBE5" opacity="0.5"/>'
+    '<path d="M1200,900 C1050,870 960,760 1050,700 C1140,640 1230,760 1200,900 Z"'
+    ' fill="#9671BD" opacity="0.18"/>'
+    '<path d="M930,45 C1020,105 1080,60 1170,105" stroke="#9671BD" stroke-width="2"'
+    ' fill="none" opacity="0.55"/>'
+    '<g opacity="0.5" fill="#77B5B6">'
+    '<ellipse cx="1122" cy="87" rx="24" ry="10" transform="rotate(-28 1122 87)"/>'
+    '<ellipse cx="1158" cy="129" rx="24" ry="10" transform="rotate(18 1158 129)"/>'
+    '<ellipse cx="1095" cy="138" rx="21" ry="9" transform="rotate(42 1095 138)"/>'
+    '</g>'
+    '<g opacity="0.45" fill="#77B5B6">'
+    '<ellipse cx="60" cy="755" rx="27" ry="12" transform="rotate(34 60 755)"/>'
+    '<ellipse cx="108" cy="800" rx="24" ry="10" transform="rotate(-20 108 800)"/>'
+    '<ellipse cx="45" cy="820" rx="21" ry="9" transform="rotate(62 45 820)"/>'
+    '</g>'
+    '</svg>'
+)
+BACKGROUND_URI = "data:image/svg+xml," + urllib.parse.quote(BACKGROUND_SVG, safe="")
+
 st.markdown(
-    """
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&display=swap"
-          rel="stylesheet">
+    f"""
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-      /* Willy's face: round, on a lilac disc */
-      [data-testid="stChatMessageAvatarAssistant"] img,
-      [data-testid="stChatMessageAvatarAssistant"] {
-          border-radius: 50%;
-          background: #EEE5F8;
-      }
-      /* Willy's messages: white card with a hairline */
-      [data-testid="stChatMessage"] {
+      [data-testid="stAppViewContainer"] {{
+          background-image: url("{BACKGROUND_URI}");
+          background-size: cover;
+          background-attachment: fixed;
+      }}
+      [data-testid="stHeader"] {{ background: transparent; }}
+      .block-container {{
+          max-width: 920px;
+          padding-top: 7rem;
+          padding-bottom: 6rem;
+      }}
+      html, body, .stApp, p, li, div, span, label, input, textarea {{
+          font-family: 'Nunito', sans-serif;
+      }}
+      [data-testid="stChatMessage"] {{
           background: #FFFFFF;
-          border: 0.5px solid #E7DEF2;
-          border-radius: 14px;
-          padding: 0.6rem 0.9rem;
-          margin-bottom: 0.5rem;
-      }
-      /* her messages: pale violet with a violet edge */
-      [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-          background: #E7DDF6;
-          border: 1px solid #5B3B8C;
-          color: #2E1B4D;
-      }
-      [data-testid="stChatInput"] { border-radius: 14px; }
-      h1 {
+          border: none;
+          border-radius: 18px 18px 18px 6px;
+          padding: 14px 20px;
+          margin-bottom: 14px;
+          max-width: 80%;
+          width: fit-content;
+          box-shadow: 0 1px 3px rgba(106, 64, 141, 0.07);
+      }}
+      [data-testid="stChatMessage"] p {{
+          font-size: 16px;
+          line-height: 1.7;
+          color: #2A2235;
+      }}
+      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) {{
+          background: #AED5D5;
+          border-radius: 18px 18px 6px 18px;
+          margin-left: auto;
+      }}
+      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) p {{
+          color: #153B3D;
+      }}
+      [data-testid="stChatMessageAvatarImage"] {{
+          border-radius: 50%;
+          border: 2px solid #FFFFFF;
+          background: #D8D1EC;
+      }}
+      [data-testid="stChatInput"] {{
+          background: #FFFFFF;
+          border: none;
+          border-radius: 18px;
+      }}
+      [data-testid="stChatInputTextArea"] {{ font-size: 16px; }}
+      h1, [data-testid="stHeading"] h1 {{
           font-family: 'Nunito', sans-serif;
           font-weight: 700;
-          color: #5B3B8C;
-          letter-spacing: 0.5px;
+          font-size: 2.6rem;
+          color: #6A408D !important;
           margin-bottom: 0rem;
           padding-top: 0.5rem;
-      }
-      /* the one dramatic touch: a blush rule under the title */
-      hr { border: none; height: 3px; background: #E0A3AC;
-           border-radius: 3px; opacity: 1; }
-      /* tables inside Willy's answers */
-      table { font-size: 0.9rem; }
+      }}
+      [data-testid="stCaptionContainer"] p {{
+          font-size: 15px;
+          color: #9671BD;
+      }}
+      hr {{
+          border: none;
+          height: 2px;
+          background: #C9BFE0;
+          border-radius: 2px;
+          opacity: 1;
+      }}
+      table {{ font-size: 15px; }}
+      a {{ color: #378D94; }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 # header: Willy's smiling face next to his name
-header_left, header_right = st.columns([1, 6], vertical_alignment="center")
+header_left, header_right = st.columns([1, 7], vertical_alignment="center")
 with header_left:
     happy_face = AVATARS["happy"]
     if os.path.exists(happy_face):
-        st.image(happy_face, width=78)
+        st.image(happy_face, width=90)
 with header_right:
     st.title("Willy")
-    st.caption("An ingredient and label-claim checker for skincare and diet foods.")
+    st.caption("Your skincare and food label checker")
 
 st.divider()
 
@@ -258,7 +326,7 @@ for m in st.session_state.messages:
         with st.chat_message("assistant", avatar=face(m["mood"])):
             st.markdown(m["content"])
     else:
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=face("you")):
             st.markdown(m["content"])
 
 # a fresh-start button once an answer has been given
