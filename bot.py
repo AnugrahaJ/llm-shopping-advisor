@@ -368,9 +368,33 @@ def recommended_product(answer):
     return name
 
 
+SIZE_PATTERN = re.compile(
+    r"\b\d+\s?(g|gm|gms|kg|ml|l|litre|liter|oz|pcs|pc|count|n)\b", re.I)
+PACK_PATTERN = re.compile(r"\b(pack|combo|set)\s+of\s+\d+\b", re.I)
+
+
+def clean_search_name(name):
+    """Trim a product name down to something a shop's search box can handle.
+
+    Amazon's search does badly with long names: 'Satjeevan Organic Millet
+    Jaggery Cookies (180 g)' returns unrelated millet cookies, because
+    '(180' and 'g)' are treated as search terms. Dropping the bracketed
+    part, the pack size and anything past the first six words finds it."""
+    if not name:
+        return name
+    text = re.sub(r"\([^)]*\)", " ", name)
+    text = text.split("|")[0]
+    text = PACK_PATTERN.sub(" ", text)
+    text = SIZE_PATTERN.sub(" ", text)
+    text = re.sub(r"[^\w\s&'-]", " ", text)
+    words = [w for w in text.split() if w]
+    return " ".join(words[:6]).strip()
+
+
 def amazon_search_url(name):
-    """An Amazon India search for this exact product name."""
-    return "https://www.amazon.in/s?k=" + urllib.parse.quote_plus(name)
+    """An Amazon India search for this product, with the name cleaned up."""
+    return "https://www.amazon.in/s?k=" + urllib.parse.quote_plus(
+        clean_search_name(name) or name)
 
 
 NAME_STOPWORDS = {
@@ -417,15 +441,22 @@ def resolve_product_link(name):
     for the wrong one."""
     if not name:
         return None, None
-    try:
-        results = cached_search(f"{name} buy online India")
-    except Exception:
-        return amazon_search_url(name), "search"
 
-    for r in results.get("results", []):
-        url = r.get("url")
-        if is_product_page(url) and title_matches_product(name, r.get("title", "")):
-            return url, "product"
+    short = clean_search_name(name)
+
+    # Two attempts: the full name, then the trimmed one. The trimmed query
+    # often finds the page the long one misses.
+    for query in (f"{name} buy online India", f"{short} buy online amazon"):
+        if not query.strip():
+            continue
+        try:
+            results = cached_search(query)
+        except Exception:
+            continue
+        for r in results.get("results", []):
+            url = r.get("url")
+            if is_product_page(url) and title_matches_product(name, r.get("title", "")):
+                return url, "product"
 
     return amazon_search_url(name), "search"
 

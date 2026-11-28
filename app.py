@@ -402,8 +402,10 @@ st.markdown(
       [data-testid="stChatMessageAvatarImage"] {{ border-radius: 50%; background: transparent; }}
       [data-testid="stChatInput"] {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 16px; }}
       [data-testid="stChatInputTextArea"] {{ font-size: 0.95rem; }}
-      .stButton > button, .stLinkButton > a {{ background: {NAVY}; color: {IVORY} !important; border: none; border-radius: 12px; padding: 0.8rem 1.6rem; font-weight: 600; font-size: 1.05rem; }}
-      .stButton > button:hover, .stLinkButton > a:hover {{ background: #1b2c45; color: {IVORY} !important; }}
+      .stButton > button, .stLinkButton > a, [data-testid="stLinkButton"] > a, [data-testid="stBaseButton-secondary"] {{ background: {NAVY} !important; color: {IVORY} !important; border: none !important; border-radius: 12px; padding: 0.8rem 1.6rem; font-weight: 600; font-size: 1.05rem; }}
+      .stButton > button p, .stLinkButton > a p, [data-testid="stLinkButton"] a p, [data-testid="stLinkButton"] a div, .stButton > button div {{ color: {IVORY} !important; font-weight: 600; }}
+      .stButton > button:hover, .stLinkButton > a:hover, [data-testid="stLinkButton"] > a:hover {{ background: #1b2c45 !important; color: {IVORY} !important; }}
+      .stButton > button:hover p, .stLinkButton > a:hover p {{ color: {IVORY} !important; }}
       a {{ color: #378D94; }}
       hr {{ border: none; height: 1px; background: {BEIGE}; }}
     </style>
