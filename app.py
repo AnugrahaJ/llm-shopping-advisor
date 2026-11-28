@@ -312,8 +312,9 @@ st.markdown(
       .willy-name {{ font-family: 'Fraunces', serif; font-weight: 700; color: {NAVY}; line-height: 1; margin: 0; }}
       .willy-sub {{ color: {DUSTY_BLUE}; margin: 0.25rem 0 0; }}
       .willy-rule {{ width: 88px; height: 2px; background: {ROSE}; margin: 1.1rem auto; border-radius: 2px; }}
-      .willy-h2 {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.3rem; color: {NAVY}; text-align: center; margin: 0; line-height: 1.2; }}
-      .willy-lede {{ font-size: 1rem; color: {CHARCOAL}; line-height: 1.75; text-align: center; max-width: 620px; margin: 0.7rem auto 0; }}
+      .willy-h2 {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.6rem; color: {NAVY}; text-align: center; margin: 0; line-height: 1.2; }}
+      .willy-center {{ width: 100%; text-align: center; }}
+      .willy-lede {{ display: inline-block; font-size: 1.05rem; color: {CHARCOAL}; line-height: 1.75; text-align: center; max-width: 640px; margin: 0.8rem 0 0; }}
       .willy-label {{ font-size: 0.82rem; font-weight: 600; color: {NAVY}; margin: 0.6rem 0 0.1rem 3.3rem; }}
       .you-label {{ font-size: 0.82rem; font-weight: 600; color: {DUSTY_BLUE}; text-align: right; margin: 1rem 0.3rem 0.25rem 0; }}
       .you-bubble {{ background: {NAVY}; color: {IVORY}; border-radius: 18px 18px 6px 18px; padding: 13px 18px; max-width: 62%; margin-left: auto; font-size: 0.95rem; line-height: 1.7; width: fit-content; }}
@@ -392,11 +393,13 @@ def category_card(title, desc, image_key):
 
 if st.session_state.stage == "welcome":
     header(big=True)
-    st.markdown('<p class="willy-h2">Find products that suit you.</p>', unsafe_allow_html=True)
     st.markdown(
+        '<div class="willy-center">'
+        '<p class="willy-h2">Find products that suit you.</p>'
         '<p class="willy-lede">Discover skincare and diet-friendly food products '
         'based on your needs, preferences and budget. I read the ingredients list '
-        'so you don\'t have to.</p>',
+        'so you don\'t have to.</p>'
+        '</div>',
         unsafe_allow_html=True,
     )
 
