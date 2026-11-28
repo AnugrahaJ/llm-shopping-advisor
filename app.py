@@ -23,7 +23,8 @@ import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from bot import (llm, detect_category_2, run_v2_7, extract_links,
-                 search_result_links, OUT_OF_SCOPE_REPLY)
+                 is_product_page, recommended_product, resolve_product_link,
+                 OUT_OF_SCOPE_REPLY)
 
 
 # ===== the question lists =====
@@ -202,7 +203,8 @@ DEFAULTS = {
     "answer_text": None,
     "answer_links": [],
     "answer_query": None,
-    "fallback_links": [],
+    "link_url": None,
+    "link_kind": None,
     "question_no": 0,
 }
 
@@ -270,9 +272,25 @@ def run_search():
         return
 
     st.session_state.answer_text = answer
-    st.session_state.answer_links = extract_links(answer)
+    links = extract_links(answer)
+    st.session_state.answer_links = links
     st.session_state.answer_query = query
-    st.session_state.fallback_links = []
+
+    # Decide the button's link in code, not by trusting the model.
+    # 1. If the model gave a link and it is a real product page, use it.
+    # 2. Otherwise ask which product it recommended. NONE means a refusal,
+    #    so there is no link and no button.
+    # 3. Search again for that exact name and take the first product page,
+    #    falling back to an Amazon search for the name.
+    url, kind = None, None
+    if links and is_product_page(links[0]):
+        url, kind = links[0], "product"
+    else:
+        name = recommended_product(answer)
+        if name:
+            url, kind = resolve_product_link(name)
+    st.session_state.link_url = url
+    st.session_state.link_kind = kind
     st.session_state.stage = "results"
 
 
@@ -506,19 +524,13 @@ else:
     elif st.session_state.stage == "results":
         links = st.session_state.answer_links
 
-        if links:
-            st.link_button("View product", links[0])
-        elif st.session_state.fallback_links:
-            st.caption("Willy left the link out. These are the pages his search returned:")
-            for url in st.session_state.fallback_links[:3]:
-                st.link_button(url[:70] + ("..." if len(url) > 70 else ""), url)
-        else:
-            st.caption("Willy didn't give a product link for this one.")
-            if st.session_state.answer_query and st.button("Show the pages he searched"):
-                st.session_state.fallback_links = search_result_links(
-                    st.session_state.answer_query
-                )
-                st.rerun()
+        url = st.session_state.link_url
+        if url and st.session_state.link_kind == "product":
+            st.link_button("View product", url)
+        elif url:
+            st.link_button("Find it on Amazon", url)
+            st.caption("No direct product page turned up, so this is a search for "
+                       "the exact product name.")
 
         st.write("")
         if st.button("Ask about something else"):

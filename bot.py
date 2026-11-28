@@ -11,6 +11,7 @@ import json
 import hashlib
 import re
 import time
+import urllib.parse
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -320,6 +321,77 @@ def run_v2_7(message, answers):
         f"Search results:\n{format_results(results)}"
     )
     return category, query, llm.invoke([LINK_RULES, human]).content
+
+# ===== turning a recommendation into a real product link =====
+
+# What a genuine product page looks like on each of the four allowed shops.
+# Anything else (an /s? search, a /c/ category page) is a listing, not a product.
+
+PRODUCT_URL_MARKERS = ("/dp/", "/gp/product/", "/p/itm", "/p/", "/buy")
+LISTING_URL_MARKERS = ("/s?", "/s/", "&k=", "?k=", "/c/", "/b/", "/clk/", "rh=")
+
+
+def is_product_page(url):
+    """True if the URL looks like a single product page rather than a listing."""
+    if not url:
+        return False
+    low = url.lower()
+    if any(m in low for m in LISTING_URL_MARKERS):
+        return False
+    return any(m in low for m in PRODUCT_URL_MARKERS)
+
+
+PRODUCT_NAME_RULES = SystemMessage(
+    "You are reading a shopping assistant's answer.\n"
+    "If it recommends or endorses a specific product the shopper could buy, reply "
+    "with that product's exact name and nothing else.\n"
+    "If it refuses, recommends nothing, or says no suitable product was found, "
+    "reply with exactly: NONE\n"
+    "No punctuation, no explanation, no quotes."
+)
+
+
+def recommended_product(answer):
+    """The product name the answer recommends, or None if it recommends nothing.
+
+    Doubles as the refusal check: a safety refusal returns None, so no link is
+    ever looked up for one."""
+    if not answer:
+        return None
+    try:
+        reply = llm.invoke([PRODUCT_NAME_RULES, HumanMessage(answer[:4000])])
+    except Exception:
+        return None
+    name = reply.content.strip().strip('"').split("\n")[0].strip()
+    if not name or name.upper().startswith("NONE") or len(name) > 120:
+        return None
+    return name
+
+
+def amazon_search_url(name):
+    """An Amazon India search for this exact product name."""
+    return "https://www.amazon.in/s?k=" + urllib.parse.quote_plus(name)
+
+
+def resolve_product_link(name):
+    """Find a real product page for this product name.
+
+    Returns (url, kind) where kind is 'product' for a genuine product page or
+    'search' for an Amazon search as a fallback. Costs one cached search."""
+    if not name:
+        return None, None
+    try:
+        results = cached_search(f"{name} buy online India")
+    except Exception:
+        return amazon_search_url(name), "search"
+
+    for r in results.get("results", []):
+        url = r.get("url")
+        if is_product_page(url):
+            return url, "product"
+
+    return amazon_search_url(name), "search"
+
 
 def search_result_links(query):
     """The URLs the search tool returned for this query, in order.
