@@ -4,47 +4,65 @@ Willy — the LLM Shopping Advisor chat app.
 Run it with:
     streamlit run app.py
 
-Willy asks the follow-up questions one at a time, remembers the answers,
-then calls run_v2_6 from bot.py to search and answer.
+Four stages, held in st.session_state.stage:
+    welcome  -> the landing screen
+    chat     -> Willy asks the follow-up questions, one at a time
+    summary  -> Willy shows what he understood and asks her to confirm
+    results  -> the recommendation, with a View product button when there is a link
+
+Willy calls run_v2_7 from bot.py, which returns an answer with the product
+link in it. extract_links pulls the URL out. No link means no button, which
+is correct for a refusal.
 """
 
 import os
+import base64
 import urllib.parse
 
 import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from bot import llm, detect_category_2, run_v2_6, OUT_OF_SCOPE_REPLY
+from bot import llm, detect_category_2, run_v2_7, extract_links, OUT_OF_SCOPE_REPLY
 
 
 # ===== the question lists =====
-# Each item is (key, what Willy says). The key is what goes in the answers dict.
+# (key, what Willy says, short label for the summary card)
 
 SKINCARE_QUESTIONS = [
     ("skin_type",
-     "What's your skin type — oily, dry, combination, or not sure?"),
+     "What's your skin type — oily, dry, combination, or not sure?",
+     "Skin type"),
     ("concern",
-     "What's the main thing you'd like it to help with?"),
+     "What's the main thing you'd like it to help with?",
+     "Main concern"),
     ("budget",
-     "What's your budget? If you're not sure, just say so and I'll suggest a range."),
+     "What's your budget? If you're not sure, just say so and I'll suggest a range.",
+     "Budget"),
     ("allergies",
-     "Any allergies or sensitivities, or anything a dermatologist has told you to avoid?"),
+     "Any allergies or sensitivities, or anything a dermatologist has told you to avoid?",
+     "Allergies"),
     ("current_routine",
-     "What does your current routine look like? If you don't have one, that's fine too."),
+     "What does your current routine look like? If you don't have one, that's fine too.",
+     "Current routine"),
 ]
 
 DIET_QUESTIONS = [
     ("safety",
      "First, something important: are you pregnant, taking any medication, "
-     "or managing a medical condition?"),
+     "or managing a medical condition?",
+     "Health notes"),
     ("goal",
-     "What's your goal — weight loss, weight gain, or just eating better?"),
+     "What's your goal — weight loss, weight gain, or just eating better?",
+     "Goal"),
     ("allergies",
-     "Any food allergies I should know about?"),
+     "Any food allergies I should know about?",
+     "Allergies"),
     ("meal_or_snack",
-     "Will this replace a meal, or is it a snack on top of your meals?"),
+     "Will this replace a meal, or is it a snack on top of your meals?",
+     "Meal or snack"),
     ("budget",
-     "What's your budget? If you're not sure, just say so and I'll suggest a range."),
+     "What's your budget? If you're not sure, just say so and I'll suggest a range.",
+     "Budget"),
 ]
 
 
@@ -57,16 +75,53 @@ AVATARS = {
     "concerned": "assets/concerned.png",
     "surprised": "assets/surprised.png",
     "apologetic": "assets/apologetic.png",
-    "you": "assets/you.png",          # her own avatar
 }
+
+# Base names only. find_image() tries the usual extensions, so it does not
+# matter whether you saved them as .png, .jpg or .webp.
+
+CATEGORY_IMAGES = {
+    "skincare": "assets/skincare",
+    "diet_foods": "assets/food",
+}
+
+IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
+
+
+def find_image(base):
+    """First file that exists among base.png, base.jpg, base.jpeg, base.webp."""
+    for ext in IMAGE_EXTENSIONS:
+        candidate = base + ext
+        if os.path.exists(candidate):
+            return candidate
+    return None
 
 
 def face(mood):
-    """Return the avatar path if the file exists, otherwise fall back to an emoji."""
+    """Avatar path if the file is there, otherwise an emoji."""
     path = AVATARS.get(mood)
     if path and os.path.exists(path):
         return path
-    return "🧑" if mood == "you" else "🧴"
+    return "🧴"
+
+
+def data_uri(path):
+    """Read an image off disk and turn it into a data URI.
+    The type comes from the file's own first bytes, not its name, so a PNG
+    saved as .jpg still renders."""
+    if not path or not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        raw = f.read()
+    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+        mime = "png"
+    elif raw[:3] == b"\xff\xd8\xff":
+        mime = "jpeg"
+    elif raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        mime = "webp"
+    else:
+        mime = "png"
+    return f"data:image/{mime};base64," + base64.b64encode(raw).decode()
 
 
 # ===== the diet-foods hard stop =====
@@ -90,7 +145,7 @@ def safety_verdict(answer_text):
     for word in ("APPROVED", "STOP", "CLEAR"):
         if word in text:
             return word
-    return "STOP"          # if unsure, be careful
+    return "STOP"
 
 
 DOCTOR_STOP_REPLY = (
@@ -102,26 +157,56 @@ DOCTOR_STOP_REPLY = (
 )
 
 
-# ===== session state: what Willy remembers between messages =====
+# ===== which face Willy wears on the answer =====
+# A deterministic guess from the answer text. No extra LLM call, so no tokens.
+# Tune the word lists if a face shows up in the wrong place.
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []          # the chat on screen
-if "answers" not in st.session_state:
-    st.session_state.answers = {}           # her follow-up answers
-if "category" not in st.session_state:
-    st.session_state.category = None        # skincare / diet_foods
-if "request" not in st.session_state:
-    st.session_state.request = None         # her original message
-if "pending_key" not in st.session_state:
-    st.session_state.pending_key = None     # the question Willy just asked
-if "finished" not in st.session_state:
-    st.session_state.finished = False
+CLAIM_FAILED_WORDS = (
+    "doesn't hold", "does not hold", "hidden sugar", "still contains sugar",
+    "contains sugar", "can't confirm", "cannot confirm", "not sugar-free",
+    "despite the claim", "front of the pack", "front-of-pack",
+)
+
+DOCTOR_WORDS = (
+    "doctor", "pregnan", "medication", "medicinal", "prescription", "dermatologist has",
+)
 
 
-def say(text, mood="neutral"):
+def mood_for_answer(text, links):
+    """happy / surprised when there is a product, concerned / apologetic when there isn't."""
+    low = (text or "").lower()
+    if not links:
+        if any(w in low for w in DOCTOR_WORDS):
+            return "concerned"
+        return "apologetic"
+    if any(w in low for w in CLAIM_FAILED_WORDS):
+        return "surprised"
+    return "happy"
+
+
+# ===== session state =====
+
+DEFAULTS = {
+    "stage": "welcome",
+    "messages": [],
+    "answers": {},
+    "category": None,
+    "request": None,
+    "pending_key": None,
+    "answer_text": None,
+    "answer_links": [],
+    "question_no": 0,
+}
+
+for key, value in DEFAULTS.items():
+    if key not in st.session_state:
+        st.session_state[key] = value.copy() if isinstance(value, (dict, list)) else value
+
+
+def say(text, mood="neutral", label=None):
     """Add one of Willy's messages to the chat."""
     st.session_state.messages.append(
-        {"role": "assistant", "mood": mood, "content": text}
+        {"role": "assistant", "mood": mood, "content": text, "label": label}
     )
 
 
@@ -131,264 +216,326 @@ def questions():
     return DIET_QUESTIONS
 
 
+def label_for(key):
+    for k, _text, label in questions():
+        if k == key:
+            return label
+    return key
+
+
 def next_question():
-    """The first question she hasn't answered yet, or None if they're all done."""
-    for key, text in questions():
+    """First question she hasn't answered, or (None, None) when they're done."""
+    for key, text, _label in questions():
         if key not in st.session_state.answers:
             return key, text
     return None, None
 
 
-def ask_next_or_answer():
-    """Either ask the next question, or search and give the recommendation."""
+def ask_next_or_summarise():
+    """Ask the next question, or move to the summary screen."""
     key, text = next_question()
 
     if key is not None:
         st.session_state.pending_key = key
-        say(text, "neutral")
+        st.session_state.question_no += 1
+        say(text, "neutral", label=f"WILLY · QUESTION {st.session_state.question_no:02d}")
         return
 
-    # all questions answered — go and search.
-    # Willy's thinking face sits on screen while that happens.
     st.session_state.pending_key = None
+    say("I've got a better idea of what you're looking for. Here's what I've understood:",
+        "happy")
+    st.session_state.stage = "summary"
 
-    waiting = st.empty()
-    with waiting.container():
-        with st.chat_message("assistant", avatar=face("thinking")):
-            st.markdown("_Looking through the shops..._")
 
+def run_search():
+    """Call the bot and store the answer plus any link."""
     try:
-        category, query, answer = run_v2_6(
+        _category, _query, answer = run_v2_7(
             st.session_state.request, st.session_state.answers
         )
     except Exception as e:
-        waiting.empty()
-        say(f"Something went wrong while searching: {e}", "concerned")
-        st.session_state.finished = True
+        st.session_state.answer_text = f"Something went wrong while searching: {e}"
+        st.session_state.answer_links = []
+        st.session_state.stage = "results"
         return
 
-    waiting.empty()          # take the thinking face away
-    say(answer, "happy")
-    st.session_state.finished = True
+    st.session_state.answer_text = answer
+    st.session_state.answer_links = extract_links(answer)
+    st.session_state.stage = "results"
 
 
-def reset():
+def reset(keep_stage="chat"):
     st.session_state.answers = {}
     st.session_state.category = None
     st.session_state.request = None
     st.session_state.pending_key = None
-    st.session_state.finished = False
+    st.session_state.answer_text = None
+    st.session_state.answer_links = []
+    st.session_state.question_no = 0
+    st.session_state.messages = []
+    st.session_state.stage = keep_stage
 
 
-# ===== the screen =====
+# ===== the page =====
 
 st.set_page_config(
-    page_title="Willy — Shopping Advisor",
+    page_title="Willy — your personal purchase assistant",
     page_icon="🧴",
     layout="wide",
 )
 
-# the lavender background with its blobs and teal leaves
-BACKGROUND_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"'
-    ' preserveAspectRatio="xMidYMid slice">'
-    '<rect width="1200" height="900" fill="#ECE8F6"/>'
-    '<path d="M0,0 C180,60 270,0 390,90 C510,180 270,240 90,195 C-30,165 -15,60 0,0 Z"'
-    ' fill="#D1CBE5" opacity="0.55"/>'
-    '<path d="M1200,0 C1050,45 990,165 1080,255 C1170,345 1230,180 1200,0 Z"'
-    ' fill="#D1CBE5" opacity="0.45"/>'
-    '<path d="M0,900 C150,840 210,710 90,660 C-15,620 -15,810 0,900 Z"'
-    ' fill="#D1CBE5" opacity="0.5"/>'
-    '<path d="M1200,900 C1050,870 960,760 1050,700 C1140,640 1230,760 1200,900 Z"'
-    ' fill="#9671BD" opacity="0.18"/>'
-    '<path d="M930,45 C1020,105 1080,60 1170,105" stroke="#9671BD" stroke-width="2"'
-    ' fill="none" opacity="0.55"/>'
-    '<g opacity="0.5" fill="#77B5B6">'
-    '<ellipse cx="1122" cy="87" rx="24" ry="10" transform="rotate(-28 1122 87)"/>'
-    '<ellipse cx="1158" cy="129" rx="24" ry="10" transform="rotate(18 1158 129)"/>'
-    '<ellipse cx="1095" cy="138" rx="21" ry="9" transform="rotate(42 1095 138)"/>'
-    '</g>'
-    '<g opacity="0.45" fill="#77B5B6">'
-    '<ellipse cx="60" cy="755" rx="27" ry="12" transform="rotate(34 60 755)"/>'
-    '<ellipse cx="108" cy="800" rx="24" ry="10" transform="rotate(-20 108 800)"/>'
-    '<ellipse cx="45" cy="820" rx="21" ry="9" transform="rotate(62 45 820)"/>'
-    '</g>'
-    '</svg>'
-)
-BACKGROUND_URI = "data:image/svg+xml," + urllib.parse.quote(BACKGROUND_SVG, safe="")
+CREAM = "#F4EBDD"
+IVORY = "#FFFDF8"
+NAVY = "#243A59"
+CHARCOAL = "#344052"
+DUSTY_BLUE = "#71849B"
+ROSE = "#C58A9F"
+BERRY = "#A95778"
+BEIGE = "#E5D7C9"
 
 st.markdown(
     f"""
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-      [data-testid="stAppViewContainer"] {{
-          background-image: url("{BACKGROUND_URI}");
-          background-size: cover;
-          background-attachment: fixed;
-      }}
+      [data-testid="stAppViewContainer"] {{ background: {CREAM}; }}
       [data-testid="stHeader"] {{ background: transparent; }}
-      .block-container {{
-          max-width: 920px;
-          padding-top: 7rem;
-          padding-bottom: 6rem;
-      }}
-      html, body, .stApp, p, li, div, span, label, input, textarea {{
-          font-family: 'Nunito', sans-serif;
-      }}
-      [data-testid="stChatMessage"] {{
-          background: #FFFFFF;
-          border: none;
-          border-radius: 18px 18px 18px 6px;
-          padding: 14px 20px;
-          margin-bottom: 14px;
-          max-width: 80%;
-          width: fit-content;
-          box-shadow: 0 1px 3px rgba(106, 64, 141, 0.07);
-      }}
-      [data-testid="stChatMessage"] p {{
-          font-size: 16px;
-          line-height: 1.7;
-          color: #2A2235;
-      }}
-      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) {{
-          background: #AED5D5;
-          border-radius: 18px 18px 6px 18px;
-          margin-left: auto;
-      }}
-      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) p {{
-          color: #153B3D;
-      }}
-      [data-testid="stChatMessageAvatarImage"] {{
-          border-radius: 50%;
-          border: 2px solid #FFFFFF;
-          background: #D8D1EC;
-      }}
-      [data-testid="stChatInput"] {{
-          background: #FFFFFF;
-          border: none;
-          border-radius: 18px;
-      }}
-      [data-testid="stChatInputTextArea"] {{ font-size: 16px; }}
-      h1, [data-testid="stHeading"] h1 {{
-          font-family: 'Nunito', sans-serif;
-          font-weight: 700;
-          font-size: 2.6rem;
-          color: #6A408D !important;
-          margin-bottom: 0rem;
-          padding-top: 0.5rem;
-      }}
-      [data-testid="stCaptionContainer"] p {{
-          font-size: 15px;
-          color: #9671BD;
-      }}
-      hr {{
-          border: none;
-          height: 2px;
-          background: #C9BFE0;
-          border-radius: 2px;
-          opacity: 1;
-      }}
-      table {{ font-size: 15px; }}
+      .block-container {{ max-width: 920px; padding-top: 3.5rem; padding-bottom: 6rem; }}
+      html, body, .stApp, p, li, div, span, label, input, textarea {{ font-family: 'Inter', sans-serif; }}
+      h1, h2, h3, [data-testid="stHeading"] h1, [data-testid="stHeading"] h2, [data-testid="stHeading"] h3 {{ font-family: 'Fraunces', serif !important; font-weight: 700 !important; color: {NAVY} !important; }}
+      .willy-name {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.4rem; color: {NAVY}; line-height: 1.1; text-align: center; margin: 0.4rem 0 0; }}
+      .willy-sub {{ font-size: 0.95rem; color: {DUSTY_BLUE}; text-align: center; margin: 0.2rem 0 0; }}
+      .willy-rule {{ width: 64px; height: 2px; background: {ROSE}; margin: 0.9rem auto; border-radius: 2px; }}
+      .willy-h2 {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.6rem; color: {NAVY}; text-align: center; margin: 0; }}
+      .willy-lede {{ font-size: 0.95rem; color: {CHARCOAL}; line-height: 1.7; text-align: center; max-width: 520px; margin: 0.5rem auto 0; }}
+      .cat-card {{ background: {IVORY}; border: 1px solid {ROSE}; border-radius: 14px; padding: 12px; height: 100%; }}
+      .cat-card img {{ width: 100%; border-radius: 10px; display: block; }}
+      .cat-ph {{ width: 100%; height: 150px; border-radius: 10px; background: #EFE6DA; display: flex; align-items: center; justify-content: center; color: {DUSTY_BLUE}; font-size: 0.8rem; }}
+      .cat-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.1rem; color: {NAVY}; margin-top: 10px; }}
+      .cat-desc {{ font-size: 0.85rem; color: {DUSTY_BLUE}; line-height: 1.6; }}
+      .helps {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 14px; padding: 16px 20px; margin-top: 18px; }}
+      .helps-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.1rem; color: {NAVY}; margin-bottom: 6px; }}
+      .helps li {{ font-size: 0.9rem; color: {CHARCOAL}; line-height: 2; }}
+      .qlabel {{ font-size: 0.7rem; letter-spacing: 0.08em; color: {BERRY}; font-weight: 600; margin: 0 0 4px 52px; }}
+      .summary-card {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 14px; padding: 18px 22px; margin-top: 10px; }}
+      .summary-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; color: {NAVY}; margin-bottom: 10px; }}
+      .summary-row {{ display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; border-bottom: 1px solid {BEIGE}; font-size: 0.92rem; }}
+      .summary-row:last-child {{ border-bottom: none; }}
+      .summary-key {{ color: {DUSTY_BLUE}; }}
+      .summary-val {{ color: {NAVY}; font-weight: 500; text-align: right; }}
+      .answer-card {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 14px; padding: 18px 22px; }}
+      .answer-flag {{ font-size: 0.7rem; letter-spacing: 0.08em; color: {BERRY}; font-weight: 600; margin-bottom: 8px; }}
+      [data-testid="stChatMessage"] {{ background: {IVORY}; border: none; border-radius: 18px 18px 18px 6px; padding: 14px 20px; margin-bottom: 10px; max-width: 82%; width: fit-content; box-shadow: none; }}
+      [data-testid="stChatMessage"] p {{ font-size: 0.95rem; line-height: 1.7; color: {CHARCOAL}; }}
+      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) {{ background: {NAVY}; border-radius: 18px 18px 6px 18px; margin-left: auto; }}
+      [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) p {{ color: {IVORY}; }}
+      [data-testid="stChatMessageAvatarImage"] {{ border-radius: 50%; background: transparent; }}
+      [data-testid="stChatInput"] {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 16px; }}
+      [data-testid="stChatInputTextArea"] {{ font-size: 0.95rem; }}
+      .stButton > button, .stLinkButton > a {{ background: {NAVY}; color: {IVORY} !important; border: none; border-radius: 10px; padding: 0.6rem 1.4rem; font-weight: 600; font-size: 0.95rem; }}
+      .stButton > button:hover, .stLinkButton > a:hover {{ background: #1b2c45; color: {IVORY} !important; }}
       a {{ color: #378D94; }}
+      hr {{ border: none; height: 1px; background: {BEIGE}; }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# header: Willy's smiling face next to his name
-header_left, header_right = st.columns([1, 7], vertical_alignment="center")
-with header_left:
-    happy_face = AVATARS["happy"]
-    if os.path.exists(happy_face):
-        st.image(happy_face, width=90)
-with header_right:
-    st.title("Willy")
-    st.caption("Your skincare and food label checker")
 
-st.divider()
-
-# Willy's opening line, only once
-if not st.session_state.messages:
-    say(
-        "Hi, I'm Willy 👋\n\n"
-        "I read the ingredients list so you don't have to. I help with "
-        "**skincare** and **diet foods** — and I'll be honest with you. If a "
-        "\"zero sugar\" or \"brightening\" claim doesn't hold up, I'll say so. "
-        "If something isn't right for you, I'll say that too, even if you've "
-        "already got your heart set on it.\n\n"
-        "So — what are you looking at?",
-        "happy",
+def header(big=True):
+    """Willy's face, name and the pink rule, centred."""
+    size = 76 if big else 50
+    uri = data_uri(AVATARS["happy"])
+    img = (f'<img src="{uri}" width="{size}" style="display:block;margin:0 auto;">'
+           if uri else "")
+    sub = f'<p class="willy-sub">Your personal purchase assistant</p>' if big else ""
+    st.markdown(
+        f'{img}<p class="willy-name" style="font-size:{2.4 if big else 1.5}rem;">Willy</p>'
+        f'{sub}<div class="willy-rule"></div>',
+        unsafe_allow_html=True,
     )
 
-# draw the whole conversation
-for m in st.session_state.messages:
-    if m["role"] == "assistant":
-        with st.chat_message("assistant", avatar=face(m["mood"])):
-            st.markdown(m["content"])
-    else:
-        with st.chat_message("user", avatar=face("you")):
-            st.markdown(m["content"])
 
-# a fresh-start button once an answer has been given
-if st.session_state.finished:
-    if st.button("Ask about something else"):
-        reset()
-        say("Sure — what are you looking for?", "neutral")
+def category_card(title, desc, image_key):
+    uri = data_uri(find_image(CATEGORY_IMAGES[image_key]))
+    picture = (f'<img src="{uri}">' if uri
+               else '<div class="cat-ph">add the photo to assets/</div>')
+    st.markdown(
+        f'<div class="cat-card">{picture}'
+        f'<div class="cat-title">{title}</div>'
+        f'<div class="cat-desc">{desc}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ===== stage 1: welcome =====
+
+if st.session_state.stage == "welcome":
+    header(big=True)
+    st.markdown('<p class="willy-h2">Find products that suit you.</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="willy-lede">Discover skincare and diet-friendly food products '
+        'based on your needs, preferences and budget. I read the ingredients list '
+        'so you don\'t have to.</p>',
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+    left, right = st.columns(2, gap="medium")
+    with left:
+        category_card("Skincare",
+                      "Find products for your skin type and concerns.",
+                      "skincare")
+    with right:
+        category_card("Diet-friendly food",
+                      "Navigate packaged food choices and find what fits.",
+                      "diet_foods")
+
+    st.markdown(
+        '<div class="helps"><div class="helps-title">What Willy helps you do</div>'
+        '<ul><li>Get a recommendation built around your own answers</li>'
+        '<li>Check whether a label claim actually holds up</li>'
+        '<li>Hear it plainly when a product isn\'t right for you</li></ul></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.write("")
+    if st.button("Get started", use_container_width=True):
+        reset(keep_stage="chat")
+        say("Hi, I'm Willy. I help with **skincare** and **diet foods**, and I'll be "
+            "honest with you — if a \"zero sugar\" or \"brightening\" claim doesn't "
+            "hold up, I'll say so.\n\nSo, what are you looking at?", "happy")
         st.rerun()
 
-# the input box
-user_text = st.chat_input("What would you like to buy?")
 
-if user_text:
-    st.session_state.messages.append({"role": "user", "content": user_text})
+# ===== stages 2, 3, 4 share the compact header and the conversation =====
 
-    # ---- 1. no category yet: this is her opening request ----
-    if st.session_state.category is None:
-        with st.spinner("Thinking..."):
-            category = detect_category_2(user_text)
+else:
+    header(big=False)
 
-        if category == "other":
-            say(OUT_OF_SCOPE_REPLY, "concerned")
+    for m in st.session_state.messages:
+        if m["role"] == "assistant":
+            if m.get("label"):
+                st.markdown(f'<p class="qlabel">{m["label"]}</p>', unsafe_allow_html=True)
+            with st.chat_message("assistant", avatar=face(m["mood"])):
+                st.markdown(m["content"])
         else:
-            st.session_state.category = category
-            st.session_state.request = user_text
-            say("Got it. A few quick questions first.", "thinking")
-            ask_next_or_answer()
+            with st.chat_message("user"):
+                st.markdown(m["content"])
 
-    # ---- 2. she's answering a question ----
-    elif st.session_state.pending_key is not None:
-        key = st.session_state.pending_key
-        st.session_state.answers[key] = user_text
+    # ----- stage 3: the preference summary -----
 
-        # the diet-foods hard stop, checked right after question 1
-        if st.session_state.category == "diet_foods" and key == "safety":
-            with st.spinner("Thinking..."):
-                verdict = safety_verdict(user_text)
+    if st.session_state.stage == "summary":
+        rows = ""
+        for key, _text, label in questions():
+            value = st.session_state.answers.get(key, "")
+            rows += (f'<div class="summary-row"><span class="summary-key">{label}</span>'
+                     f'<span class="summary-val">{value}</span></div>')
+        heading = ("Your skincare preferences" if st.session_state.category == "skincare"
+                   else "Your diet food preferences")
+        st.markdown(
+            f'<div class="summary-card"><div class="summary-title">{heading}</div>'
+            f'{rows}</div>',
+            unsafe_allow_html=True,
+        )
+        st.write("")
 
-            if verdict == "STOP":
-                say(DOCTOR_STOP_REPLY, "concerned")
-                st.session_state.finished = True
+        if st.button("Yes, find my matches", use_container_width=True):
+            with st.spinner("Looking through the shops..."):
+                run_search()
+            st.rerun()
+
+        with st.expander("I want to change something"):
+            labels = {label: key for key, _text, label in questions()}
+            choice = st.selectbox("Which answer?", list(labels.keys()))
+            if st.button("Change this answer"):
+                key = labels[choice]
+                st.session_state.answers.pop(key, None)
+                st.session_state.stage = "chat"
+                ask_next_or_summarise()
                 st.rerun()
-            elif verdict == "APPROVED":
-                st.session_state.answers[key] = (
-                    user_text + " (she says her doctor has approved this kind of product)"
-                )
 
-        ask_next_or_answer()
+    # ----- stage 4: the recommendation -----
 
-    # ---- 3. she's typed something after the answer was given ----
-    else:
-        st.session_state.request = user_text
-        st.session_state.answers = {}
-        st.session_state.finished = False
-        with st.spinner("Thinking..."):
-            st.session_state.category = detect_category_2(user_text)
+    elif st.session_state.stage == "results":
+        links = st.session_state.answer_links
+        mood = mood_for_answer(st.session_state.answer_text, links)
+        flag = ("CHECKED AGAINST YOUR ANSWERS" if links else "NO PRODUCT RECOMMENDED")
+        st.markdown(f'<div class="answer-flag">{flag}</div>', unsafe_allow_html=True)
+        with st.chat_message("assistant", avatar=face(mood)):
+            st.markdown(st.session_state.answer_text or "")
 
-        if st.session_state.category == "other":
-            say(OUT_OF_SCOPE_REPLY, "concerned")
-            st.session_state.finished = True
-        else:
-            say("Got it. A few quick questions first.", "thinking")
-            ask_next_or_answer()
+        if links:
+            st.link_button("View product", links[0])
 
-    st.rerun()
+        st.write("")
+        if st.button("Ask about something else"):
+            reset(keep_stage="chat")
+            say("Sure — what are you looking for?", "neutral")
+            st.rerun()
+
+    # ----- the input box, on the chat and results stages -----
+
+    if st.session_state.stage in ("chat", "results"):
+        placeholder = ("Type your answer..." if st.session_state.pending_key
+                       else "Message Willy...")
+        user_text = st.chat_input(placeholder)
+
+        if user_text:
+            st.session_state.messages.append({"role": "user", "content": user_text})
+
+            # no category yet: this is her opening request
+            if st.session_state.category is None:
+                with st.spinner("Thinking..."):
+                    category = detect_category_2(user_text)
+
+                if category == "other":
+                    say(OUT_OF_SCOPE_REPLY, "apologetic")
+                else:
+                    st.session_state.category = category
+                    st.session_state.request = user_text
+                    say("Got it. A few quick questions first.", "thinking")
+                    ask_next_or_summarise()
+
+            # she's answering a question
+            elif st.session_state.pending_key is not None:
+                key = st.session_state.pending_key
+                st.session_state.answers[key] = user_text
+
+                stopped = False
+                if st.session_state.category == "diet_foods" and key == "safety":
+                    with st.spinner("Thinking..."):
+                        verdict = safety_verdict(user_text)
+
+                    if verdict == "STOP":
+                        say(DOCTOR_STOP_REPLY, "concerned")
+                        st.session_state.pending_key = None
+                        st.session_state.answer_text = DOCTOR_STOP_REPLY
+                        st.session_state.answer_links = []
+                        st.session_state.stage = "results"
+                        stopped = True
+                    elif verdict == "APPROVED":
+                        st.session_state.answers[key] = (
+                            user_text
+                            + " (she says her doctor has approved this kind of product)"
+                        )
+
+                if not stopped:
+                    ask_next_or_summarise()
+
+            # she's typed something after the answer was given
+            else:
+                request = user_text
+                reset(keep_stage="chat")
+                st.session_state.messages.append({"role": "user", "content": request})
+                with st.spinner("Thinking..."):
+                    category = detect_category_2(request)
+
+                if category == "other":
+                    say(OUT_OF_SCOPE_REPLY, "apologetic")
+                else:
+                    st.session_state.category = category
+                    st.session_state.request = request
+                    say("Got it. A few quick questions first.", "thinking")
+                    ask_next_or_summarise()
+
+            st.rerun()
