@@ -283,9 +283,13 @@ def reset(keep_stage="chat"):
 
 # ===== the page =====
 
+# page_icon takes an image path, so Willy's face becomes the browser favicon.
+# page_title is also what the share-preview card on WhatsApp or LinkedIn uses
+# as its headline.
+
 st.set_page_config(
     page_title="Willy — your personal purchase assistant",
-    page_icon="🧴",
+    page_icon=(AVATARS["happy"] if os.path.exists(AVATARS["happy"]) else "🧴"),
     layout="wide",
 )
 
