@@ -22,7 +22,8 @@ import base64
 import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from bot import llm, detect_category_2, run_v2_7, extract_links, OUT_OF_SCOPE_REPLY
+from bot import (llm, detect_category_2, run_v2_7, extract_links,
+                 search_result_links, OUT_OF_SCOPE_REPLY)
 
 
 # ===== the question lists =====
@@ -200,6 +201,8 @@ DEFAULTS = {
     "pending_key": None,
     "answer_text": None,
     "answer_links": [],
+    "answer_query": None,
+    "fallback_links": [],
     "question_no": 0,
 }
 
@@ -255,21 +258,26 @@ def ask_next_or_summarise():
 def run_search():
     """Call the bot and store the answer plus any link."""
     try:
-        _category, _query, answer = run_v2_7(
+        _category, query, answer = run_v2_7(
             st.session_state.request, st.session_state.answers
         )
     except Exception as e:
         st.session_state.answer_text = f"Something went wrong while searching: {e}"
         st.session_state.answer_links = []
+        st.session_state.answer_query = None
+        st.session_state.fallback_links = []
         st.session_state.stage = "results"
         return
 
     st.session_state.answer_text = answer
     st.session_state.answer_links = extract_links(answer)
+    st.session_state.answer_query = query
+    st.session_state.fallback_links = []
     st.session_state.stage = "results"
 
 
-def reset(keep_stage="chat"):
+def reset(keep_stage="chat", clear_chat=True):
+    """Start a fresh request. clear_chat=False keeps the conversation on screen."""
     st.session_state.answers = {}
     st.session_state.category = None
     st.session_state.request = None
@@ -277,7 +285,8 @@ def reset(keep_stage="chat"):
     st.session_state.answer_text = None
     st.session_state.answer_links = []
     st.session_state.question_no = 0
-    st.session_state.messages = []
+    if clear_chat:
+        st.session_state.messages = []
     st.session_state.stage = keep_stage
 
 
@@ -477,6 +486,9 @@ else:
         if st.button("Yes, find my matches", use_container_width=True):
             with st.spinner("Looking through the shops..."):
                 run_search()
+            say(st.session_state.answer_text,
+                mood_for_answer(st.session_state.answer_text,
+                                st.session_state.answer_links))
             st.rerun()
 
         with st.expander("I want to change something"):
@@ -493,14 +505,20 @@ else:
 
     elif st.session_state.stage == "results":
         links = st.session_state.answer_links
-        mood = mood_for_answer(st.session_state.answer_text, links)
-        flag = ("CHECKED AGAINST YOUR ANSWERS" if links else "NO PRODUCT RECOMMENDED")
-        st.markdown(f'<div class="answer-flag">{flag}</div>', unsafe_allow_html=True)
-        with st.chat_message("assistant", avatar=face(mood)):
-            st.markdown(st.session_state.answer_text or "")
 
         if links:
             st.link_button("View product", links[0])
+        elif st.session_state.fallback_links:
+            st.caption("Willy left the link out. These are the pages his search returned:")
+            for url in st.session_state.fallback_links[:3]:
+                st.link_button(url[:70] + ("..." if len(url) > 70 else ""), url)
+        else:
+            st.caption("Willy didn't give a product link for this one.")
+            if st.session_state.answer_query and st.button("Show the pages he searched"):
+                st.session_state.fallback_links = search_result_links(
+                    st.session_state.answer_query
+                )
+                st.rerun()
 
         st.write("")
         if st.button("Ask about something else"):
@@ -557,20 +575,19 @@ else:
                 if not stopped:
                     ask_next_or_summarise()
 
-            # she's typed something after the answer was given
+            # she's typed something after the answer was given.
+            # Treat it as a follow-up on the same request: keep the chat, keep her
+            # answers, and search again with what she just said added as context.
+            # Only the "Ask about something else" button starts over.
             else:
-                request = user_text
-                reset(keep_stage="chat")
-                st.session_state.messages.append({"role": "user", "content": request})
-                with st.spinner("Thinking..."):
-                    category = detect_category_2(request)
-
-                if category == "other":
-                    say(OUT_OF_SCOPE_REPLY, "apologetic")
-                else:
-                    st.session_state.category = category
-                    st.session_state.request = request
-                    say("Got it. A few quick questions first.", "thinking")
-                    ask_next_or_summarise()
+                st.session_state.request = (
+                    f"{st.session_state.request}\n\n"
+                    f"She has seen your previous answer and now says: {user_text}"
+                )
+                with st.spinner("Looking again..."):
+                    run_search()
+                say(st.session_state.answer_text,
+                    mood_for_answer(st.session_state.answer_text,
+                                    st.session_state.answer_links))
 
             st.rerun()

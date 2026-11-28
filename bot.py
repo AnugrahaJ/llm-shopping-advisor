@@ -22,6 +22,18 @@ from langchain_tavily import TavilySearch
 
 load_dotenv()
 
+# On Streamlit Community Cloud there is no .env file — the keys live in
+# st.secrets instead. Copy them into the environment so ChatGroq and Tavily
+# can find them. Wrapped in try/except so the runner scripts still work
+# outside Streamlit, and skipped entirely when .env already supplied a key.
+try:
+    import streamlit as _st
+    for _key in ("GROQ_API_KEY", "TAVILY_API_KEY"):
+        if not os.getenv(_key) and _key in _st.secrets:
+            os.environ[_key] = _st.secrets[_key]
+except Exception:
+    pass
+
 llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
 
 search = TavilySearch(
@@ -308,6 +320,26 @@ def run_v2_7(message, answers):
         f"Search results:\n{format_results(results)}"
     )
     return category, query, llm.invoke([LINK_RULES, human]).content
+
+def search_result_links(query):
+    """The URLs the search tool returned for this query, in order.
+
+    Deterministic and free — it reads the cached search results, no LLM call.
+    Used as a fallback when the model names a product but leaves the link out.
+    Returns [] if the query is None or the search can't be read."""
+    if not query:
+        return []
+    try:
+        results = cached_search(query)
+    except Exception:
+        return []
+    out = []
+    for r in results.get("results", []):
+        url = r.get("url")
+        if url and url not in out:
+            out.append(url)
+    return out
+
 
 def extract_links(text):
     """Pull the URLs out of an answer, in order, no duplicates.
