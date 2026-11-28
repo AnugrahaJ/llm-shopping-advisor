@@ -16,8 +16,8 @@ is correct for a refusal.
 """
 
 import os
+import html
 import base64
-import urllib.parse
 
 import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -86,6 +86,11 @@ CATEGORY_IMAGES = {
 }
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
+
+# The big header portrait. Falls back to the normal happy face if the
+# large one isn't there.
+
+HEADER_IMAGE_BASES = ("assets/happy_large", "assets/happy")
 
 
 def find_image(base):
@@ -299,25 +304,30 @@ st.markdown(
     <style>
       [data-testid="stAppViewContainer"] {{ background: {CREAM}; }}
       [data-testid="stHeader"] {{ background: transparent; }}
-      .block-container {{ max-width: 920px; padding-top: 3.5rem; padding-bottom: 6rem; }}
+      .block-container {{ max-width: 1080px; padding-top: 1.5rem; padding-bottom: 6rem; }}
       html, body, .stApp, p, li, div, span, label, input, textarea {{ font-family: 'Inter', sans-serif; }}
       h1, h2, h3, [data-testid="stHeading"] h1, [data-testid="stHeading"] h2, [data-testid="stHeading"] h3 {{ font-family: 'Fraunces', serif !important; font-weight: 700 !important; color: {NAVY} !important; }}
-      .willy-name {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.4rem; color: {NAVY}; line-height: 1.1; text-align: center; margin: 0.4rem 0 0; }}
-      .willy-sub {{ font-size: 0.95rem; color: {DUSTY_BLUE}; text-align: center; margin: 0.2rem 0 0; }}
-      .willy-rule {{ width: 64px; height: 2px; background: {ROSE}; margin: 0.9rem auto; border-radius: 2px; }}
-      .willy-h2 {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.6rem; color: {NAVY}; text-align: center; margin: 0; }}
-      .willy-lede {{ font-size: 0.95rem; color: {CHARCOAL}; line-height: 1.7; text-align: center; max-width: 520px; margin: 0.5rem auto 0; }}
-      .cat-card {{ background: {IVORY}; border: 1px solid {ROSE}; border-radius: 14px; padding: 12px; height: 100%; }}
-      .cat-card img {{ width: 100%; border-radius: 10px; display: block; }}
-      .cat-ph {{ width: 100%; height: 150px; border-radius: 10px; background: #EFE6DA; display: flex; align-items: center; justify-content: center; color: {DUSTY_BLUE}; font-size: 0.8rem; }}
-      .cat-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.1rem; color: {NAVY}; margin-top: 10px; }}
-      .cat-desc {{ font-size: 0.85rem; color: {DUSTY_BLUE}; line-height: 1.6; }}
-      .helps {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 14px; padding: 16px 20px; margin-top: 18px; }}
-      .helps-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.1rem; color: {NAVY}; margin-bottom: 6px; }}
-      .helps li {{ font-size: 0.9rem; color: {CHARCOAL}; line-height: 2; }}
+      .hdr {{ display: flex; align-items: center; justify-content: center; gap: 18px; }}
+      .hdr-text {{ text-align: left; }}
+      .willy-name {{ font-family: 'Fraunces', serif; font-weight: 700; color: {NAVY}; line-height: 1; margin: 0; }}
+      .willy-sub {{ color: {DUSTY_BLUE}; margin: 0.25rem 0 0; }}
+      .willy-rule {{ width: 88px; height: 2px; background: {ROSE}; margin: 1.1rem auto; border-radius: 2px; }}
+      .willy-h2 {{ font-family: 'Fraunces', serif; font-weight: 700; font-size: 2.3rem; color: {NAVY}; text-align: center; margin: 0; line-height: 1.2; }}
+      .willy-lede {{ font-size: 1rem; color: {CHARCOAL}; line-height: 1.75; text-align: center; max-width: 620px; margin: 0.7rem auto 0; }}
+      .willy-label {{ font-size: 0.82rem; font-weight: 600; color: {NAVY}; margin: 0.6rem 0 0.1rem 3.3rem; }}
+      .you-label {{ font-size: 0.82rem; font-weight: 600; color: {DUSTY_BLUE}; text-align: right; margin: 1rem 0.3rem 0.25rem 0; }}
+      .you-bubble {{ background: {NAVY}; color: {IVORY}; border-radius: 18px 18px 6px 18px; padding: 13px 18px; max-width: 62%; margin-left: auto; font-size: 0.95rem; line-height: 1.7; width: fit-content; }}
+      .cat-card {{ background: {IVORY}; border: 1px solid {ROSE}; border-radius: 16px; padding: 14px; height: 100%; }}
+      .cat-card img {{ width: 100%; height: 230px; object-fit: cover; border-radius: 12px; display: block; }}
+      .cat-ph {{ width: 100%; height: 230px; border-radius: 10px; background: #EFE6DA; display: flex; align-items: center; justify-content: center; color: {DUSTY_BLUE}; font-size: 0.8rem; }}
+      .cat-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.45rem; color: {NAVY}; margin-top: 12px; }}
+      .cat-desc {{ font-size: 0.95rem; color: {DUSTY_BLUE}; line-height: 1.6; }}
+      .helps {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 16px; padding: 20px 24px; margin-top: 20px; }}
+      .helps-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.45rem; color: {NAVY}; margin-bottom: 6px; }}
+      .helps li {{ font-size: 1rem; color: {CHARCOAL}; line-height: 2.1; }}
       .qlabel {{ font-size: 0.7rem; letter-spacing: 0.08em; color: {BERRY}; font-weight: 600; margin: 0 0 4px 52px; }}
       .summary-card {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 14px; padding: 18px 22px; margin-top: 10px; }}
-      .summary-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.2rem; color: {NAVY}; margin-bottom: 10px; }}
+      .summary-title {{ font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.45rem; color: {NAVY}; margin-bottom: 10px; }}
       .summary-row {{ display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; border-bottom: 1px solid {BEIGE}; font-size: 0.92rem; }}
       .summary-row:last-child {{ border-bottom: none; }}
       .summary-key {{ color: {DUSTY_BLUE}; }}
@@ -331,7 +341,7 @@ st.markdown(
       [data-testid="stChatMessageAvatarImage"] {{ border-radius: 50%; background: transparent; }}
       [data-testid="stChatInput"] {{ background: {IVORY}; border: 1px solid {BEIGE}; border-radius: 16px; }}
       [data-testid="stChatInputTextArea"] {{ font-size: 0.95rem; }}
-      .stButton > button, .stLinkButton > a {{ background: {NAVY}; color: {IVORY} !important; border: none; border-radius: 10px; padding: 0.6rem 1.4rem; font-weight: 600; font-size: 0.95rem; }}
+      .stButton > button, .stLinkButton > a {{ background: {NAVY}; color: {IVORY} !important; border: none; border-radius: 12px; padding: 0.8rem 1.6rem; font-weight: 600; font-size: 1.05rem; }}
       .stButton > button:hover, .stLinkButton > a:hover {{ background: #1b2c45; color: {IVORY} !important; }}
       a {{ color: #378D94; }}
       hr {{ border: none; height: 1px; background: {BEIGE}; }}
@@ -341,16 +351,27 @@ st.markdown(
 )
 
 
+def header_image():
+    """The big portrait, preferring assets/happy_large if it exists."""
+    for base in HEADER_IMAGE_BASES:
+        uri = data_uri(find_image(base))
+        if uri:
+            return uri
+    return None
+
+
 def header(big=True):
-    """Willy's face, name and the pink rule, centred."""
-    size = 76 if big else 50
-    uri = data_uri(AVATARS["happy"])
-    img = (f'<img src="{uri}" width="{size}" style="display:block;margin:0 auto;">'
-           if uri else "")
-    sub = f'<p class="willy-sub">Your personal purchase assistant</p>' if big else ""
+    """Willy's face beside his name, with the pink rule underneath."""
+    size = 92 if big else 56
+    name_size = 3.6 if big else 2.1
+    sub_size = 1.0 if big else 0.85
+    uri = header_image()
+    img = (f'<img src="{uri}" width="{size}" style="display:block;">' if uri else "")
     st.markdown(
-        f'{img}<p class="willy-name" style="font-size:{2.4 if big else 1.5}rem;">Willy</p>'
-        f'{sub}<div class="willy-rule"></div>',
+        f'<div class="hdr">{img}<div class="hdr-text">'
+        f'<p class="willy-name" style="font-size:{name_size}rem;">Willy</p>'
+        f'<p class="willy-sub" style="font-size:{sub_size}rem;">Your personal purchase assistant</p>'
+        f'</div></div><div class="willy-rule"></div>',
         unsafe_allow_html=True,
     )
 
@@ -416,11 +437,18 @@ else:
         if m["role"] == "assistant":
             if m.get("label"):
                 st.markdown(f'<p class="qlabel">{m["label"]}</p>', unsafe_allow_html=True)
+            else:
+                st.markdown('<p class="willy-label">Willy</p>', unsafe_allow_html=True)
             with st.chat_message("assistant", avatar=face(m["mood"])):
                 st.markdown(m["content"])
         else:
-            with st.chat_message("user"):
-                st.markdown(m["content"])
+            # Her messages are drawn by hand. st.chat_message would force
+            # Streamlit's own red default avatar, which we don't want.
+            text = html.escape(m["content"]).replace("\n", "<br>")
+            st.markdown(
+                f'<p class="you-label">You</p><div class="you-bubble">{text}</div>',
+                unsafe_allow_html=True,
+            )
 
     # ----- stage 3: the preference summary -----
 
