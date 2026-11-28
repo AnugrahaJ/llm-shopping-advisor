@@ -373,11 +373,48 @@ def amazon_search_url(name):
     return "https://www.amazon.in/s?k=" + urllib.parse.quote_plus(name)
 
 
-def resolve_product_link(name):
-    """Find a real product page for this product name.
+NAME_STOPWORDS = {
+    "the", "and", "for", "with", "pack", "combo", "of", "gm", "kg", "ml",
+    "box", "jar", "pouch", "set", "new", "pcs", "piece", "pieces",
+}
 
-    Returns (url, kind) where kind is 'product' for a genuine product page or
-    'search' for an Amazon search as a fallback. Costs one cached search."""
+
+def name_tokens(text):
+    """Meaningful words in a product name, lowercased."""
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return [w for w in words if len(w) > 2 and w not in NAME_STOPWORDS]
+
+
+def title_matches_product(name, title):
+    """True if this search result is plausibly the product we named.
+
+    A URL being a product page is not enough — it has to be a page for the
+    RIGHT product. Without this check the first product page in the results
+    gets used, which is how a request for gluten-free biscotti ended up
+    linking to Sunfeast Bounce."""
+    wanted = name_tokens(name)
+    if not wanted:
+        return False
+    found = set(name_tokens(title))
+
+    # The first word is almost always the brand. Without this check,
+    # "Alpino Natural Peanut Butter" matches "Pintola Natural Peanut Butter".
+    if wanted[0] not in found:
+        return False
+
+    hits = sum(1 for w in wanted if w in found)
+    if len(wanted) <= 2:
+        return hits == len(wanted)
+    return hits >= 2 and hits / len(wanted) >= 0.5
+
+
+def resolve_product_link(name):
+    """Find a product page for THIS product, or fall back to searching for it.
+
+    Returns (url, kind): 'product' for a verified product page, 'search' for an
+    Amazon search on the exact name. Costs one cached search. When in doubt it
+    returns the search — a search for the right product beats a product page
+    for the wrong one."""
     if not name:
         return None, None
     try:
@@ -387,7 +424,7 @@ def resolve_product_link(name):
 
     for r in results.get("results", []):
         url = r.get("url")
-        if is_product_page(url):
+        if is_product_page(url) and title_matches_product(name, r.get("title", "")):
             return url, "product"
 
     return amazon_search_url(name), "search"

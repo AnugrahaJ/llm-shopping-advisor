@@ -16,6 +16,7 @@ is correct for a refusal.
 """
 
 import os
+import re
 import html
 import base64
 
@@ -213,6 +214,34 @@ for key, value in DEFAULTS.items():
         st.session_state[key] = value.copy() if isinstance(value, (dict, list)) else value
 
 
+MD_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^\s\)]+)\)")
+BARE_URL = re.compile(r"(?<![\(\]])https?://\S+")
+
+
+def strip_links(text):
+    """Take the model's own links out of the answer text.
+
+    The button underneath is worked out separately and verified, so showing
+    both means two links that can disagree. One link, one place."""
+    if not text:
+        return text
+    def keep_label(m):
+        label = m.group(1).strip()
+        # "Buy it here" with the link removed reads like a broken button,
+        # so drop the phrase entirely. Any other label is real sentence text.
+        if label.lower().rstrip(".!").strip() in {
+            "buy it here", "buy here", "buy now", "link", "product link",
+            "view product", "see it here", "shop here",
+        }:
+            return ""
+        return label
+
+    text = MD_LINK.sub(keep_label, text)
+    text = BARE_URL.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def say(text, mood="neutral", label=None):
     """Add one of Willy's messages to the chat."""
     st.session_state.messages.append(
@@ -271,8 +300,8 @@ def run_search():
         st.session_state.stage = "results"
         return
 
-    st.session_state.answer_text = answer
     links = extract_links(answer)
+    st.session_state.answer_text = strip_links(answer)
     st.session_state.answer_links = links
     st.session_state.answer_query = query
 
