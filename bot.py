@@ -9,6 +9,7 @@ v3  asks follow-up questions, fixed form       (not built yet)
 import os
 import json
 import hashlib
+import re
 import time
 
 from pydantic import BaseModel, Field
@@ -148,6 +149,19 @@ JUDGE_RULES = SystemMessage(
     "for a stated serving size. If the search results don't show the label, "
     "say so plainly instead of guessing."
 )
+LINK_RULES = SystemMessage(
+    JUDGE_RULES.content + "\n\n"
+    "LINKS:\n"
+    "- When you recommend a product, or give a verdict on one she named, always "
+    "give its LINK exactly as it appears in the search results, as a markdown "
+    "link on its own line: [Buy it here](LINK)\n"
+    "- Copy the URL character for character. Never shorten it, never guess it, "
+    "never build one from the product name.\n"
+    "- If the search results have no link for the product you are discussing, "
+    "say so plainly instead of inventing one.\n"
+    "- If you are NOT recommending a product — a safety refusal, a medicinal "
+    "item, or nothing suitable found — do not give any link."
+)
 # ===== STEP 3b: the fixed answer form (v3 only) =====
 
 class SkincareAnswer(BaseModel):
@@ -278,6 +292,35 @@ def run_v2_6(message, answers):
     )
     return category, query, llm.invoke([JUDGE_RULES, human]).content
 
+def run_v2_7(message, answers):
+    """v2.6 plus the link rule: every recommendation carries its product URL."""
+    category = detect_category_2(message)
+    if category == "other":
+        return category, None, OUT_OF_SCOPE_REPLY
+
+    profile = format_answers(answers)
+
+    query = write_search_query(f"{message}\n\nAbout the shopper:\n{profile}")
+    results = cached_search(query)
+    human = HumanMessage(
+        f"Shopper's message: {message}\n\n"
+        f"About the shopper:\n{profile}\n\n"
+        f"Search results:\n{format_results(results)}"
+    )
+    return category, query, llm.invoke([LINK_RULES, human]).content
+
+def extract_links(text):
+    """Pull the URLs out of an answer, in order, no duplicates.
+    Deterministic — no LLM call. Returns [] when the answer has no link,
+    which is correct for refusals."""
+    urls = re.findall(r"https?://[^\s\)\]]+", text or "")
+    seen, out = set(), []
+    for u in urls:
+        u = u.rstrip(".,;")
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
 # ===== quick check: python bot.py =====+
 
 if __name__ == "__main__":
